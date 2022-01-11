@@ -1,33 +1,24 @@
-name: docker-build
+language: node_js
+node_js:
+  - 13
 
-on:
-  push:
-    branches:
-      - 'master'
+services:
+  - docker
 
-jobs:
-  docker:
-    runs-on: ubuntu-latest
-    environment: 'dev'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+# Pre-testing installs
+install:
+  - echo "nothing needs to be installed"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+# Scripts to be run such as tests
+before_script:
+  - echo "no tests" 
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+script:
+  - docker --version # print the version for logging
+  - docker build -t junniepat/udagram-api-user .
+  - docker tag junniepat/udagram-api-user junniepat/udagram-api-user:latest
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/udagram-api-user
+# Tasks to perform after the process is successful. Formatting the Docker username and password as below enables you to programmatically log in without having the password exposed in logs.
+after_success:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push junniepat/udagram-api-user
